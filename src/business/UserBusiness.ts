@@ -5,8 +5,9 @@ import { UserDatabase } from "../data/UserDatabase";
 import { HashManager } from "../services/hashManager";
 import { TokenGenerator } from "../services/tokenGenerator";
 
-export class UserBusiness extends User {
+export class UserBusiness {
  async userSignup(user: UserSignupDTO) {
+   console.log("Validating user atributes...")
     function validateEmail(email: string): boolean {
       const re = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
       return re.test(String(email).toLowerCase());
@@ -22,7 +23,7 @@ export class UserBusiness extends User {
     const id = IdGenerator.generate()
     const encryptedPassword = await HashManager.hash(user.email)
     
-    const newUser = new User (
+    const newUser = new User(
       id,
       user.name,
       user.email,
