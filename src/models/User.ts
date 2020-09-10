@@ -13,11 +13,25 @@ export class User {
   getNickname() {return this.nickname}
   getPassword() {return this.password}
 
+  static toUserModel(user: any): User {
+    return new User(
+      user.id,
+      user.name,
+      user.email,
+      user.nickname,
+      user.password
+    )
+  }
 }
 
 export interface UserSignupDTO {
-  name: string,
-  email: string,
-  nickname: string,
+  name: string
+  email: string
+  nickname: string
+  password: string
+}
+
+export interface UserLoginDTO {
+  login: string
   password: string
 }

@@ -1,9 +1,10 @@
-import { UserSignupDTO, User } from "../models/User";
+import { UserSignupDTO, User, UserLoginDTO } from "../models/User";
 import { InvalidParameterError } from "../services/errors/InvalidParameterError";
 import { IdGenerator } from "../services/idGenerator";
 import { UserDatabase } from "../data/UserDatabase";
 import { HashManager } from "../services/hashManager";
 import { TokenGenerator } from "../services/tokenGenerator";
+import { UnauthorizedError } from "../services/errors/UnauthorizedError";
 
 export class UserBusiness {
  async userSignup(user: UserSignupDTO) {
@@ -21,7 +22,7 @@ export class UserBusiness {
     }
 
     const id = IdGenerator.generate()
-    const encryptedPassword = await HashManager.hash(user.email)
+    const encryptedPassword = await new HashManager().hash(user.password)
     
     const newUser = new User(
       id,
@@ -30,11 +31,25 @@ export class UserBusiness {
       user.nickname,
       encryptedPassword
     )
-      
     const token = TokenGenerator.generate({id: newUser.getId()})
-
     await new UserDatabase().userSignup(newUser)
+    return token
+  }
+  
+  async login(userInput: UserLoginDTO) {
+    const user = await new UserDatabase().getUserByEmailOrNickname(userInput.login)
+    
+    const passwordPass = await new HashManager().compare(userInput.password, user.getPassword())
+    console.log(passwordPass)
+    console.log(userInput.password)
+    console.log(user.getPassword())
+    console.log(user)
 
+    if(!passwordPass || !user) {
+      throw new UnauthorizedError("Incorrect login or password")
+    }
+
+    const token = TokenGenerator.generate({id: user.getId()})
     return token
   }
 }
