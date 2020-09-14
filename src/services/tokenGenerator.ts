@@ -1,11 +1,9 @@
-import * as jwt from "jsonwebtoken";
-import dotenv from "dotenv";
-dotenv.config();
+import * as jwt from "jsonwebtoken"
 
-export abstract class TokenGenerator {
-  private static expiresIn: number = 1200;
+export class TokenGenerator {
+  private static expiresIn = process.env.JWT_EXPIRES_IN
 
-  public static generate = (input: AuthenticationData): string => {
+  public generate = (input: AuthenticationData): string => {
     const newToken = jwt.sign(
       {
         id: input.id,
@@ -14,17 +12,17 @@ export abstract class TokenGenerator {
       {
         expiresIn: TokenGenerator.expiresIn,
       }
-    );
-    return newToken;
-  };
+    )
+    return newToken
+  }
 
-  public static verify(token: string) {
-    const payload = jwt.verify(token, process.env.JWT_KEY as string) as any;
-    const result = { id: payload.id };
-    return result;
+  public verify(token: string) {
+    const payload = jwt.verify(token, process.env.JWT_KEY as string) as any
+    const result = { id: payload.id }
+    return result
   }
 }
 
 export interface AuthenticationData {
-  id: string;
+  id: string
 }

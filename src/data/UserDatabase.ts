@@ -31,4 +31,30 @@ export class UserDatabase extends BaseDataBase {
       throw new Error(error.sqlmessage || error.message)
     }
   }
+
+  async verifyEmailAvailability(email: string): Promise<boolean> {
+    try {
+      const result = await this.getConnection().raw(`
+        SELECT IF
+        (email = "${email}", true, false) as result
+        FROM MyFrames_User
+      `)
+      return result[0][0].result
+    } catch (error) {
+      throw new Error(error.sqlmessage || error.message)
+    }
+  }
+
+  async verifyNicknameAvailability(nickname: string): Promise<boolean> {
+    try {
+      const result = await this.getConnection().raw(`
+        SELECT IF
+        (nickname = "${nickname}", true, false) as result
+        FROM MyFrames_User
+      `)
+      return result[0][0].result
+    } catch (error) {
+      throw new Error(error.sqlmessage || error.message)
+    }
+  }
 }
