@@ -16,7 +16,7 @@ export class UserBusiness {
     private tokenGenerator: TokenGenerator
   ){}
 
- async userSignup(user: UserSignupDTO) {
+ async userSignup(user: UserSignupDTO): Promise<string> {
    
    if(!user.email || !user.name || !user.nickname || !user.password) {
      throw new GenericError('All fields are required')
@@ -58,7 +58,7 @@ export class UserBusiness {
     return token
   }
   
-  async login(userInput: UserLoginDTO) {
+  async login(userInput: UserLoginDTO): Promise<string> {
     const user = await this.userDatabase.getUserByEmailOrNickname(userInput.login)
     
     const passwordPass = await this.hashManager.compare(userInput.password, user.getPassword())

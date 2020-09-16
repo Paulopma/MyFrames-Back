@@ -18,7 +18,7 @@ export class TokenGenerator {
 
   public verify(token: string) {
     const payload = jwt.verify(token, process.env.JWT_KEY as string) as any
-    const result = { id: payload.id }
+    const result = payload.id
     return result
   }
 }
