@@ -1,13 +1,16 @@
 import moment from "moment";
 import { ImageDatabase } from "../data/ImageDatabase";
+import { LinkTagImage, TagDatabase } from "../data/TagDatabase";
 import { UserDatabase } from "../data/UserDatabase";
-import { CreateImageDTO, Image, LinkTagImage, Tag } from "../models/Image";
+import { CreateImageDTO, Image} from "../models/Image";
+import { Tag } from "../models/Tag";
 import { IdGenerator } from "../services/IdGenerator";
 import { TokenGenerator } from "../services/TokenGenerator";
 
 export class ImageBusiness {
   constructor(
     private imageDatabase: ImageDatabase,
+    private tagDatabase: TagDatabase,
     private idGenerator: IdGenerator,
     private tokenGenerator: TokenGenerator
   ){}
@@ -18,41 +21,44 @@ export class ImageBusiness {
       const author = await new UserDatabase().getUserById(authorId)
       const imageId = this.idGenerator.generate()
       const date = moment().format('YYYY/MM/DDTHH:mm:ss')
-  
+      const tags: Tag[] = []
+
+      await Promise.all(image.tags.map(async (tag) => {
+        const tagExists = await this.tagDatabase.tagNameExists(tag)
+        console.log(tagExists)
+        if(!tagExists) {
+          const newTag: Tag = new Tag(
+            this.idGenerator.generate(),
+            tag
+          )
+          await this.tagDatabase.createTag(newTag)
+        }
+        let imageTag = await this.tagDatabase.getTagByName(tag)
+        console.log(imageTag)
+        tags.push(imageTag)
+      }))
+
       const newImage = new Image(
         imageId,
         image.subtitle,
         author,
         date,
         image.file,
-        image.tags,
+        tags,
         image.collection
       )
 
       await this.imageDatabase.createImage(newImage)
-        
-      await Promise.all(newImage.getTags().map(async (tagName) => {
-        let imageTag = await this.imageDatabase.getTagByName(tagName)
-        let tagExists = true
-        console.log(imageTag)
-        if(!imageTag) {
-          tagExists = false
-          const newTag: Tag = {
-            id: this.idGenerator.generate(),
-            name: tagName
-          }
-          await this.imageDatabase.createTag(newTag)
-        }
-        if(tagExists === false) {
-          imageTag = await this.imageDatabase.getTagByName(tagName)
-        }
+      console.log(tags)
+
+      await Promise.all(tags.map(async (tag) => {
         const linkTagImageIds: LinkTagImage = {
-          imageId: newImage.getId(),
-          tagId: imageTag.id
+          imageId,
+          tagId: tag.getId()
         }
-        await this.imageDatabase.linkTagToImage(linkTagImageIds)
+        await this.tagDatabase.linkTagToImage(linkTagImageIds)
       }))
-  
+        
     } catch (error) {
       throw new Error(error.message)
     }
@@ -65,6 +71,19 @@ export class ImageBusiness {
       const allImages = await this.imageDatabase.getAllImages()
 
       return allImages
+    } catch (error) {
+      throw new Error(error.message)
+    }
+  }
+
+  async getImageById(id: string, token: string) {
+    try {
+      await this.tokenGenerator.verify(token)
+      console.log(id)
+
+      const image = await this.imageDatabase.getImageById(id)
+
+      return image
     } catch (error) {
       throw new Error(error.message)
     }
