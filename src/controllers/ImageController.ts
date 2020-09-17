@@ -1,6 +1,7 @@
 import {Request, Response} from "express"
 import { ImageBusiness } from "../business/ImageBusiness"
 import { ImageDatabase } from "../data/ImageDatabase"
+import { TagDatabase } from "../data/TagDatabase"
 import { CreateImageDTO } from "../models/Image"
 import { IdGenerator } from "../services/IdGenerator"
 import { TokenGenerator } from "../services/TokenGenerator"
@@ -8,6 +9,7 @@ import { TokenGenerator } from "../services/TokenGenerator"
 export class ImageController {
   private static imageBusiness = new ImageBusiness(
     new ImageDatabase(),
+    new TagDatabase(),
     new IdGenerator(),
     new TokenGenerator()
   ) 
@@ -41,6 +43,17 @@ export class ImageController {
     } catch (error) {
       res.status(400).send({error: error.message})
     }
+  }
 
+  async getImageById(req: Request, res: Response) {
+    try {
+      const token = req.headers.authorization as string
+      const imageId = req.params.id
+
+      const image = await ImageController.imageBusiness.getImageById(imageId, token)
+      res.status(200).send(image)
+    } catch (error) {
+      res.status(400).send({error: error.message})
+    }
   }
 }

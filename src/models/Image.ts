@@ -1,3 +1,8 @@
+import moment from "moment";
+import { ImageDatabase } from "../data/ImageDatabase";
+import { TagDatabase } from "../data/TagDatabase";
+import { UserDatabase } from "../data/UserDatabase";
+import { Tag } from "./Tag";
 import { User } from "./User";
 
 export class Image {
@@ -7,7 +12,7 @@ export class Image {
     private author: User,
     private date: string,
     private file: string,
-    private tags: string[],
+    private tags: Tag[],
     private collection: string
   ) {}
 
@@ -51,11 +56,11 @@ export class Image {
     this.file = file
   }
 
-  public getTags(): string[] {
+  public getTags(): Tag[] {
     return this.tags
   }
 
-  public setTags(tags: string[]): void {
+  public setTags(tags: Tag[]): void {
     this.tags = tags
   }
 
@@ -67,27 +72,17 @@ export class Image {
     this.collection = collection
   } 
 
-  static toImageModel(image: any) {
+  static async toImageModel(image: any) {
     return new Image(
       image.id,
       image.subtitle,
-      image.author,
-      image.date,
+      await new UserDatabase().getUserById(image.author_id),
+      moment(image.date).format('DD/MM/YYYYTHH:mm:ss'),
       image.file,
-      image.tags,
+      await new TagDatabase().getTagsByImageId(image.id),
       image.collection
     )
   }
-}
-
-export interface Tag {
-  id: string,
-  name: string
-}
-
-export interface LinkTagImage {
-  tagId: string,
-  imageId: string
 }
 
 export interface CreateImageDTO {
